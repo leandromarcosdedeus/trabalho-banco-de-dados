@@ -1,3 +1,6 @@
+#para instalar o mysql connector: pip install mysql-connector-python
+#bcript para criptografar: pip install bcrypt
+
 import mysql.connector
 import os
 

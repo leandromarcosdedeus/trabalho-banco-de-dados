@@ -1,20 +1,20 @@
 import flet as ft
 from flet import Page, Row, DataTable, DataColumn, DataRow, DataCell, Column
-from database import conn
+from database import connOld
 
 def main(page: Page):
     page.controls.clear()
     page.bgcolor = "white"
     page.title = "Cadastro de Funcionário"
 
-    headers = conn.tableHeader()
+    headers = connOld.tableHeader()
 
     #funcoes para cadastro
     def create(e):
         page.controls.clear()
         
         def register(e):
-            insert = conn.insert_user(str(dynamic_fields[0].value), str(dynamic_fields[1].value),str(dynamic_fields[2].value))
+            insert = connOld.insert_user(str(dynamic_fields[0].value), str(dynamic_fields[1].value),str(dynamic_fields[2].value))
             print(insert)
             page.add(ft.Text(insert))
 
@@ -58,7 +58,7 @@ def main(page: Page):
     def editar(e, id, name, email):
         page.controls.clear()
         def edit(e):
-            insert = conn.update(dynamic_fields)
+            insert = connOld.update(dynamic_fields)
             page.add(ft.Text(insert))
             get(e)
 
@@ -103,11 +103,11 @@ def main(page: Page):
         page.update()
 
     def delete_item(id, e):
-            conn.delete(id)
+            connOld.delete(id)
             print(f'Item com ID {id} deletado com sucesso!')
             get(e)
     def get(e):
-        data = conn.getAll()
+        data = connOld.getAll()
         page.controls.clear()
 
         print(data)
@@ -153,7 +153,7 @@ def main(page: Page):
         )
         page.update()
     def getPecas(e):
-        data = conn.getAllPecas()
+        data = connOld.getAllPecas()
         page.controls.clear()
 
         print(data)
