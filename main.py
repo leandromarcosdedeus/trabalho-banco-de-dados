@@ -355,30 +355,115 @@ def listar_fornecedor_peca():
     for fornecedorPeca in cursor:
         print(fornecedorPeca)
 
+# Função para consultar pedidos de clientes
+def consultar_pedido_cliente():
+    query = """
+        SELECT 
+            pc.codigo_pedidoCliente AS pedido_codigo,
+            c.nome AS cliente_nome,
+            f.nome AS funcionario_nome,
+            pc.data,
+            pc.hora
+        FROM 
+            pedidoCliente pc
+        JOIN cliente c ON pc.cliente_id = c.id_cliente
+        JOIN funcionario f ON pc.funcionario_id = f.id_funcionario;
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(f"Pedido {row[0]} - Cliente: {row[1]} - Funcionário: {row[2]} - Data: {row[3]} - Hora: {row[4]}")
+
+# Função para consultar pedidos com peças
+def consultar_pedido_com_pecas():
+    query = """
+        SELECT 
+            ip.codigo_itemPedido AS item_codigo,
+            p.nome AS peca_nome,
+            ip.quantidade
+        FROM 
+            itemPedido ip
+        JOIN peca p ON ip.peca_id = p.id_peca;
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(f"Item {row[0]} - Peça: {row[1]} - Quantidade: {row[2]}")
+    cursor.close()
+    conn.close()
+
+# Função para consultar pagamentos com dados do cliente
+def consultar_pagamentos_com_cliente():
+    query = """
+        SELECT 
+            pg.codigo_pagamento AS pagamento_codigo,
+            pg.valorPago,
+            pg.metodo,
+            pg.status,
+            c.nome AS cliente_nome
+        FROM 
+            pagamento pg
+        JOIN pedidoCliente pc ON pg.pedidoCliente_id = pc.id_pedidoCliente
+        JOIN cliente c ON pc.cliente_id = c.id_cliente;
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(f"Pagamento {row[0]} - Valor: {row[1]} - Método: {row[2]} - Status: {row[3]} - Cliente: {row[4]}")
+
+# Função para consultar builds com informações da peça
+def consultar_builds_com_peca():
+    query = """
+        SELECT 
+            b.codigo_build AS build_codigo,
+            p.nome AS peca_nome,
+            bp.quantidade
+        FROM 
+            build b
+        JOIN buildPeca bp ON b.id_build = bp.build_id
+        JOIN peca p ON p.peca_id = p.id_peca;
+    """
+    cursor.execute(query)
+    resultados = cursor.fetchall()
+    for row in resultados:
+        print(f"Build {row[0]} - Peça: {row[1]} - Quantidade: {row[2]}")
+
+
 # Menu principal
 op = 1
 while(op != '0'):
     print("Digite a opção: ")
-    op = input("0 - Sair\n1 - Iniciar tabelas\n2 - Listar tabelas\n3 - Inserir categoriaPeca\n4 - Listar categoriaPeca\n5 - Inserir peca\n6 - Listar peca\n7 - Inserir cliente\n8 - Listar cliente\n9 - Inserir funcionario\n10 - Listar funcionario\n11 - Inserir build\n12 - Listar build\n13 - Inserir pedidoCliente\n14 - Listar pedidoCliente\n15 - Inserir itemPedido\n16 - Listar itemPedido\n17 - Inserir estoque\n18 - Listar estoque\n19 - Inserir movimentacaoEstoque\n20 - Listar movimentacaoEstoque\n21 - Inserir fornecedor\n22 - Listar fornecedor\n23 - Inserir pagamento\n24 - Listar pagamento\n25 - Inserir buildPeca\n26 - Listar buildPeca\n27 - Inserir fornecedorPeca\n28 - Listar fornecedorPeca\n")
+    op = input("0 - Sair\n1 - Iniciar tabelas\n2 - Listar tabelas\n3 - Inserir categoriaPeca\n4 - Listar categoriaPeca\n5 - Inserir peca\n6 - Listar peca\n7 - Inserir cliente\n8 - Listar cliente\n9 - Inserir funcionario\n10 - Listar funcionario\n11 - Inserir build\n12 - Listar build\n13 - Inserir pedidoCliente\n14 - Listar pedidoCliente\n15 - Inserir itemPedido\n16 - Listar itemPedido\n17 - Inserir estoque\n18 - Listar estoque\n19 - Inserir movimentacaoEstoque\n20 - Listar movimentacaoEstoque\n21 - Inserir fornecedor\n22 - Listar fornecedor\n23 - Inserir pagamento\n24 - Listar pagamento\n25 - Inserir buildPeca\n26 - Listar buildPeca\n27 - Inserir fornecedorPeca\n28 - Listar fornecedorPeca\n29 - Relatórios Gerenciais\n")
 
     if op == '1':
         iniciar_tabelas()
+        voltar_menu()
+
     elif op == '2':
         listar_tabelas()
+        voltar_menu()
+
     elif op == '3':
         codigo_categoriaPeca = input("Digite o código da categoria da peça: ")
         nome = input("Digite o nome da categoria da peça: ")
         inserir_categoria_peca(codigo_categoriaPeca, nome)
+        voltar_menu()
+
     elif op == '4':
         listar_categoria_peca()
+        voltar_menu()
+
     elif op == '5':
         codigo_peca = input("Digite o código da peça: ")
         nome = input("Digite o nome da peça: ")
         preco = input("Digite o preço da peça: ")
         categoriaPeca_id = input("Digite o id da categoria da peça: ")
         inserir_peca(codigo_peca, nome, preco, categoriaPeca_id)
+        voltar_menu()
+
     elif op == '6':
         listar_peca()
+        voltar_menu()
     elif op == '7':
         codigo_cliente = input("Digite o código do cliente: ")
         nome = input("Digite o nome do cliente: ")
@@ -388,8 +473,12 @@ while(op != '0'):
         telefone = input("Digite o telefone do cliente: ")
         cpf = input("Digite o CPF do cliente: ")
         inserir_cliente(codigo_cliente, nome, email, senha, endereco, telefone, cpf)
+        voltar_menu()
+
     elif op == '8':
         listar_cliente()
+        voltar_menu()
+
     elif op == '9':
         codigo_funcionario = input("Digite o código do funcionário: ")
         nome = input("Digite o nome do funcionário: ")
@@ -400,16 +489,24 @@ while(op != '0'):
         salario = input("Digite o salário do funcionário: ")
         cargo = input("Digite o cargo do funcionário (ex: 'A' para administrador): ")
         inserir_funcionario(codigo_funcionario, nome, email, endereco, telefone, cpf, salario, cargo)
+        voltar_menu()
+
     elif op == '10':
         listar_funcionario()
+        voltar_menu()
+
     elif op == '11':
         codigo_build = input("Digite o código do build: ")
         valor = input("Digite o valor do build: ")
         cliente_id = input("Digite o id do cliente: ")
         funcionario_id = input("Digite o id do funcionário: ")
         inserir_build(codigo_build, valor, cliente_id, funcionario_id)
+        voltar_menu()
+
     elif op == '12':
         listar_build()
+        voltar_menu()
+
     elif op == '13':
         codigo_pedidoCliente = input("Digite o código do pedido do cliente: ")
         data = input("Digite a data do pedido (formato: yyyy-mm-dd): ")
@@ -417,8 +514,12 @@ while(op != '0'):
         cliente_id = input("Digite o id do cliente: ")
         funcionario_id = input("Digite o id do funcionário: ")
         inserir_pedido_cliente(codigo_pedidoCliente, data, hora, cliente_id, funcionario_id)
+        voltar_menu()
+
     elif op == '14':
         listar_pedido_cliente()
+        voltar_menu()
+
     elif op == '15':
         codigo_itemPedido = input("Digite o código do item do pedido: ")
         quantidade = input("Digite a quantidade do item: ")
@@ -426,15 +527,24 @@ while(op != '0'):
         peca_id = input("Digite o id da peça (ou pressione Enter para não informar): ")
         build_id = input("Digite o id do build (ou pressione Enter para não informar): ")
         inserir_item_pedido(codigo_itemPedido, quantidade, pedidoCliente_id, peca_id or None, build_id or None)
+        voltar_menu()
+
     elif op == '16':
         listar_item_pedido()
+        voltar_menu()
+
     elif op == '17':
         codigo_estoque = input("Digite o código do estoque: ")
         quantidade = input("Digite a quantidade do estoque: ")
         peca_id = input("Digite o id da peça: ")
         inserir_estoque(codigo_estoque, quantidade, peca_id)
+        voltar_menu()
+
     elif op == '18':
         listar_estoque()
+
+        voltar_menu()
+
     elif op == '19':
         codigo_movimentacaoEstoque = input("Digite o código da movimentação de estoque: ")
         quantidade = input("Digite a quantidade movimentada: ")
@@ -442,8 +552,12 @@ while(op != '0'):
         peca_id = input("Digite o id da peça: ")
         estoque_id = input("Digite o id do estoque: ")
         inserir_movimentacao_estoque(codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id)
+        voltar_menu()
+
     elif op == '20':
         listar_movimentacao_estoque()
+        voltar_menu()
+
     elif op == '21':
         codigo_fornecedor = input("Digite o código do fornecedor: ")
         nome = input("Digite o nome do fornecedor: ")
@@ -452,8 +566,12 @@ while(op != '0'):
         telefone = input("Digite o telefone do fornecedor: ")
         cnpj = input("Digite o CNPJ do fornecedor: ")
         inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj)
+        voltar_menu()
+
     elif op == '22':
         listar_fornecedor()
+        voltar_menu()
+
     elif op == '23':
         codigo_pagamento = input("Digite o código do pagamento: ")
         valorPago = input("Digite o valor pago: ")
@@ -462,20 +580,43 @@ while(op != '0'):
         status = input("Digite o status do pagamento (P para pago, A para aguardando): ")
         pedidoCliente_id = input("Digite o id do pedido do cliente: ")
         inserir_pagamento(codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id)
+        voltar_menu()
+
     elif op == '24':
         listar_pagamento()
+        voltar_menu()
+
     elif op == '25':
         build_id = input("Digite o código do build: ")
         peca_id = input("Digite o código da peça: ")
         quantidade = input("Digite a quantidade: ")
         inserir_build_peca(build_id, peca_id, quantidade)
+        voltar_menu()
+
     elif op == '26':
         listar_build_peca()
+        voltar_menu()
+
     elif op == '27':
         fornecedor_id = input("Digite o código do fornecedor: ")
         peca_id = input("Digite o código da peça: ")
         inserir_fornecedor_peca(fornecedor_id, peca_id)
+        voltar_menu()
+
     elif op == '28':
         listar_fornecedor_peca()
+        voltar_menu()
+
+    elif op == '29':
+        op2 = input("Relatórios Gerenciais\n1 - Pedido por Cliente\n2 - Pedidos com Peças\n3 - Pagamentos com Informações do Cliente\n4 - Builds com Peças\n") 
+        if op2 == '1':
+            consultar_pedido_cliente()
+        elif op2 == 2:
+            consultar_pedido_com_pecas()
+        elif op2 == 3:
+            consultar_pagamentos_com_cliente()
+        elif op2 == 4:
+            consultar_builds_com_peca()
+        voltar_menu()
 
     limpar_tela()
