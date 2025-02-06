@@ -5,11 +5,11 @@ import mysql.connector
 import os
 
 conn = mysql.connector.connect(
-    host="localhost",
-    port="3306",
-    user="root",
-    password="root",
-    database="trabalho_bd",
+    host="192.168.0.190",
+    port="3307",
+    user="kapow_usr",
+    password="kapow@pass",
+    database="kapowsys",
 )
 
 cursor = conn.cursor()
@@ -562,6 +562,31 @@ def relatorio_funcionarios_com_pedidos_acima_media():
     for funcionario in funcionarios:
         print(funcionario)
 
+def relatorio_categorias_estoque_abaixo_media():
+    query = """
+        SELECT nome FROM categoriaPeca
+        WHERE id_categoriaPeca IN (
+            SELECT categoriaPeca_id FROM peca
+            WHERE id_peca IN (
+                SELECT peca_id FROM estoque
+                GROUP BY peca_id
+                HAVING SUM(quantidade) < (
+                    SELECT AVG(total_em_estoque) FROM (
+                        SELECT SUM(quantidade) AS total_em_estoque FROM estoque
+                        GROUP BY peca_id
+                    ) AS media_estoque
+                )
+            )
+        );
+    """
+    cursor.execute(query)
+    categorias = cursor.fetchall()
+    
+    print("\nCategorias com estoque abaixo da média:")
+    for categoria in categorias:
+        print(categoria)
+
+
 # Menu principal
 op = 1
 while(op != '0'):
@@ -749,6 +774,13 @@ while(op != '0'):
         print("5 - Relatório de Pedidos por Data")
         print("6 - Relatório de Pagamentos por Data")
         print("7 - Relatório de Movimentação de Estoque por Data")
+        print("8 - Relatório de Estoque por Categoria")
+        print("9 - Relatório de Gastos dos Clientes")
+        print("10 - Relatório de Pedidos por Funcionário")
+        print("11 - Relatório de Média de Vendas por Funcionário")
+        print("12 - Clientes com pedidos acima de valorMinimo")
+        print("13 - Funcionários com pedidos acima da média")
+        print("14 - Categorias com estoque abaixo da média")
 
         op2 = input("Escolha uma opção: ")
 
@@ -772,6 +804,25 @@ while(op != '0'):
             data_inicial = input("Digite a data inicial (AAAA-MM-DD): ")
             data_final = input("Digite a data final (AAAA-MM-DD): ")
             relatorio_movimentacao_estoque(data_inicial, data_final)
+        elif op2 == '8':
+            relatorio_estoque_por_categoria()
+        elif op2 == '9':
+            limiteInferior = input("Digite o limite inferior para os gastos")
+            limiteSuperior = input("Digite o limite superior para os gastos")
+            relatorio_gastos_clientes(limiteInferior,limiteSuperior)
+        elif op2 == '10':
+            limiteInferior = input("Digite o limite inferior para os pedidos")
+            limiteSuperior = input("Digite o limite superior para os pedidos")
+            relatorio_pedidos_funcionarios(limiteInferior,limiteSuperior)
+        elif op2 == '11':
+            relatorio_funcionarios_vendas_media()
+        elif op2 == '12':
+            valorMinimo = input("Digite o valor minimo para os pedidos")
+            relatorio_clientes_com_pedidos_valor(valorMinimo)
+        elif op2 == '13':
+            relatorio_funcionarios_com_pedidos_acima_media()
+        elif op2 == '14':
+            relatorio_categorias_estoque_abaixo_media()
         else:
             print("Opção inválida.")
 
