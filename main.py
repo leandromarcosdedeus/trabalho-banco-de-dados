@@ -22,13 +22,28 @@ def verifica_conexao():
 
 def listar_tabelas():
     cursor.execute("SHOW TABLES")
-    for tabela in cursor:
-        print(tabela)
+    tabelas = cursor.fetchall()
+    
+    print("\nTabelas no banco de dados:")
+    print("-" * 30)
+    for tabela in tabelas:
+        print(f"- {tabela[0]}")
+    print("-" * 30)
+
 
 def listar_categoria_peca():
-    cursor.execute("SELECT * FROM categoriaPeca")
-    for categoria in cursor:
-        print(categoria)
+    query = "SELECT id_categoriaPeca, codigo_categoriaPeca, nome FROM categoriaPeca"
+    cursor.execute(query)
+    
+    categorias = cursor.fetchall()
+    
+    print("\nLista de Categorias de Peças:")
+    print("{:<5} {:<15} {:<50}".format("ID", "Código", "Nome"))
+    print("-" * 70)
+    
+    for categoria in categorias:
+        print("{:<5} {:<15} {:<50}".format(categoria[0], categoria[1], categoria[2]))
+
 
 def inserir_peca(codigo_peca, nome, preco, categoriaPeca_id):
     cursor.execute("INSERT INTO peca (codigo_peca, nome, preco, categoriaPeca_id) VALUES (%s, %s, %s, %s)",
@@ -37,9 +52,22 @@ def inserir_peca(codigo_peca, nome, preco, categoriaPeca_id):
     print("Peça inserida com sucesso!")
 
 def listar_peca():
-    cursor.execute("SELECT * FROM peca")
-    for peca in cursor:
-        print(peca)
+    query = """
+        SELECT p.id_peca, p.codigo_peca, p.nome, p.preco, cp.nome AS categoria
+        FROM peca p
+        JOIN categoriaPeca cp ON p.categoriaPeca_id = cp.id_categoriaPeca
+    """
+    cursor.execute(query)
+    pecas = cursor.fetchall()
+
+    print("\nLista de Peças:")
+    print("{:<5} {:<15} {:<30} {:<10} {:<20}".format("ID", "Código", "Nome", "Preço", "Categoria"))
+    print("-" * 80)
+
+    for peca in pecas:
+        print("{:<5} {:<15} {:<30} R${:<8.2f} {:<20}".format(peca[0], peca[1], peca[2], peca[3], peca[4]))
+
+
 
 def inserir_cliente(codigo_cliente, nome, email, senha, endereco, telefone, cpf):
     cursor.execute(
@@ -49,9 +77,24 @@ def inserir_cliente(codigo_cliente, nome, email, senha, endereco, telefone, cpf)
     print("Cliente inserido com sucesso!")
 
 def listar_cliente():
-    cursor.execute("SELECT * FROM cliente")
-    for cliente in cursor:
-        print(cliente)
+    query = """
+        SELECT id_cliente, codigo_cliente, nome, email, endereco, telefone, cpf
+        FROM cliente
+    """
+    cursor.execute(query)
+    clientes = cursor.fetchall()
+
+    print("\nLista de Clientes:")
+    print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11}".format(
+        "ID", "Código", "Nome", "Email", "Endereço", "Telefone", "CPF"
+    ))
+    print("-" * 150)
+
+    for cliente in clientes:
+        print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11}".format(
+            cliente[0], cliente[1], cliente[2], cliente[3], cliente[4], cliente[5], cliente[6]
+        ))
+
 
 def inserir_funcionario(codigo_funcionario, nome, email, endereco, telefone, cpf, salario, cargo):
     cursor.execute(
@@ -61,9 +104,25 @@ def inserir_funcionario(codigo_funcionario, nome, email, endereco, telefone, cpf
     print("Funcionário inserido com sucesso!")
 
 def listar_funcionario():
-    cursor.execute("SELECT * FROM funcionario")
-    for funcionario in cursor:
-        print(funcionario)
+    query = """
+        SELECT id_funcionario, codigo_funcionario, nome, email, endereco, telefone, cpf, salario, cargo
+        FROM funcionario
+    """
+    cursor.execute(query)
+    funcionarios = cursor.fetchall()
+
+    print("\nLista de Funcionários:")
+    print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11} {:<10} {:<5}".format(
+        "ID", "Código", "Nome", "Email", "Endereço", "Telefone", "CPF", "Salário", "Cargo"
+    ))
+    print("-" * 170)
+
+    for funcionario in funcionarios:
+        print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11} {:<10.2f} {:<5}".format(
+            funcionario[0], funcionario[1], funcionario[2], funcionario[3], funcionario[4], 
+            funcionario[5], funcionario[6], funcionario[7], funcionario[8]
+        ))
+
 
 def listar_pecas_por_categoria():
     cursor.execute("""
