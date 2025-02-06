@@ -428,6 +428,32 @@ def consultar_builds_com_peca():
     for row in resultados:
         print(f"Build {row[0]} - Peça: {row[1]} - Quantidade: {row[2]}")
 
+def relatorio_pedidos(data_inicial, data_final):
+    query = "SELECT * FROM pedidoCliente WHERE data BETWEEN %s AND %s;"
+    cursor.execute(query, (data_inicial, data_final))
+    pedidos = cursor.fetchall()
+    
+    print("\nRelatório de Pedidos:")
+    for pedido in pedidos:
+        print(pedido)
+
+def relatorio_pagamentos(data_inicial, data_final):
+    query = "SELECT * FROM pagamento WHERE dataPagamento BETWEEN %s AND %s;"
+    cursor.execute(query, (data_inicial, data_final))
+    pagamentos = cursor.fetchall()
+    
+    print("\nRelatório de Pagamentos:")
+    for pagamento in pagamentos:
+        print(pagamento)
+
+def relatorio_movimentacao_estoque(data_inicial, data_final):
+    query = "SELECT * FROM movimentacaoEstoque WHERE dataMovimentacao BETWEEN %s AND %s;"
+    cursor.execute(query, (data_inicial, data_final))
+    movimentacoes = cursor.fetchall()
+    
+    print("\nRelatório de Movimentação de Estoque:")
+    for movimentacao in movimentacoes:
+        print(movimentacao)
 
 # Menu principal
 op = 1
@@ -608,15 +634,40 @@ while(op != '0'):
         voltar_menu()
 
     elif op == '29':
-        op2 = input("Relatórios Gerenciais\n1 - Pedido por Cliente\n2 - Pedidos com Peças\n3 - Pagamentos com Informações do Cliente\n4 - Builds com Peças\n") 
+        print("Relatórios Gerenciais")
+        print("1 - Pedido por Cliente")
+        print("2 - Pedidos com Peças")
+        print("3 - Pagamentos com Informações do Cliente")
+        print("4 - Builds com Peças")
+        print("5 - Relatório de Pedidos por Data")
+        print("6 - Relatório de Pagamentos por Data")
+        print("7 - Relatório de Movimentação de Estoque por Data")
+
+        op2 = input("Escolha uma opção: ")
+
         if op2 == '1':
             consultar_pedido_cliente()
-        elif op2 == 2:
+        elif op2 == '2':
             consultar_pedido_com_pecas()
-        elif op2 == 3:
+        elif op2 == '3':
             consultar_pagamentos_com_cliente()
-        elif op2 == 4:
+        elif op2 == '4':
             consultar_builds_com_peca()
+        elif op2 == '5':
+            data_inicial = input("Digite a data inicial (AAAA-MM-DD): ")
+            data_final = input("Digite a data final (AAAA-MM-DD): ")
+            relatorio_pedidos(data_inicial, data_final)
+        elif op2 == '6':
+            data_inicial = input("Digite a data inicial (AAAA-MM-DD): ")
+            data_final = input("Digite a data final (AAAA-MM-DD): ")
+            relatorio_pagamentos(data_inicial, data_final)
+        elif op2 == '7':
+            data_inicial = input("Digite a data inicial (AAAA-MM-DD): ")
+            data_final = input("Digite a data final (AAAA-MM-DD): ")
+            relatorio_movimentacao_estoque(data_inicial, data_final)
+        else:
+            print("Opção inválida.")
+
         voltar_menu()
 
     limpar_tela()
