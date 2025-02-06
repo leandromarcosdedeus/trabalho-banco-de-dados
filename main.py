@@ -20,19 +20,10 @@ def verifica_conexao():
     else:
         print("Erro ao conectar ao banco de dados.")
 
-def limpar_tela():
-    os.system('clear')
-
 def listar_tabelas():
     cursor.execute("SHOW TABLES")
     for tabela in cursor:
         print(tabela)
-
-def inserir_categoria_peca(codigo_categoriaPeca, nome):
-    cursor.execute("INSERT INTO categoriaPeca (codigo_categoriaPeca, nome) VALUES (%s, %s)",
-                   (codigo_categoriaPeca, nome))
-    conn.commit()
-    print("Categoria de peça inserida com sucesso!")
 
 def listar_categoria_peca():
     cursor.execute("SELECT * FROM categoriaPeca")
@@ -147,7 +138,6 @@ def listar_build():
     for build in cursor:
         print(build)
 
-
 def listar_pecas_build(build_id):
     cursor.execute("""
         SELECT bp.peca_id, p.nome, bp.quantidade, p.preco, (bp.quantidade * p.preco) AS total 
@@ -170,7 +160,6 @@ def listar_pecas_build(build_id):
 
     return pecas
 
-
 def remover_peca_build(build_id, peca_id):
     cursor.execute(
         "SELECT quantidade, p.preco FROM buildPeca bp JOIN peca p ON bp.peca_id = p.id_peca WHERE bp.build_id = %s AND bp.peca_id = %s",
@@ -190,7 +179,6 @@ def remover_peca_build(build_id, peca_id):
 
     conn.commit()
     print(f"Peça {peca_id} removida da build {build_id}. Valor total atualizado.")
-
 
 def atualizar_quantidade_peca(build_id, peca_id, nova_quantidade):
     nova_quantidade = int(nova_quantidade)
@@ -222,97 +210,256 @@ def remover_build(build_id):
     conn.commit()
     print(f"Build {build_id} removida com sucesso.")
 
+def listar_pecas_disponiveis():
+    cursor.execute("SELECT id_peca, nome, preco FROM peca ORDER BY nome")
+    pecas = cursor.fetchall()
+    print("\nItens disponíveis:")
+    for peca in pecas:
+        peca_id, nome, preco = peca
+        print(f"{peca_id} - {nome} (R$ {preco:.2f})")
+
 def inserir_pedido_cliente(codigo_pedidoCliente, data, hora, cliente_id, funcionario_id):
     cursor.execute(
         "INSERT INTO pedidoCliente (codigo_pedidoCliente, data, hora, cliente_id, funcionario_id) VALUES (%s, %s, %s, %s, %s)",
-        (codigo_pedidoCliente, data, hora, cliente_id, funcionario_id))
+        (codigo_pedidoCliente, data, hora, cliente_id, funcionario_id)
+    )
     conn.commit()
-    print("Pedido do cliente inserido com sucesso!")
 
-def listar_pedido_cliente():
-    cursor.execute("SELECT * FROM pedidoCliente")
-    for pedido in cursor:
-        print(pedido)
+    pedidoCliente_id = cursor.lastrowid
+
+    while True:
+        listar_pecas_disponiveis()
+
+        item_type = input("\nDigite o tipo de item ('peca' ou 'build') ou '0' para finalizar: ").lower()
+
+        if item_type == '0':
+            break
+
+        if item_type not in ['peca', 'build']:
+            print("Tipo de item inválido. Tente novamente.")
+            continue
+
+        if item_type == 'peca':
+            peca_id = input("Digite o código da peça: ")
+            quantidade = int(input("Digite a quantidade da peça: "))
+            inserir_item_pedido(codigo_itemPedido=None, quantidade=quantidade, pedidoCliente_id=pedidoCliente_id, peca_id=peca_id)
+
+        elif item_type == 'build':
+            build_id = input("Digite o código da build: ")
+            quantidade = int(input("Digite a quantidade da build: "))
+            inserir_item_pedido(codigo_itemPedido=None, quantidade=quantidade, pedidoCliente_id=pedidoCliente_id, build_id=build_id)
+
+    while True:
+        adicionar_pagamento = input("\nDeseja adicionar um pagamento ao pedido? (s/n): ").lower()
+        if adicionar_pagamento == 's':
+            codigo_pagamento = input("Digite o código do pagamento: ")
+            valorPago = float(input("Digite o valor pago: "))
+            dataPagamento = input("Digite a data do pagamento (formato: yyyy-mm-dd hh:mm:ss): ")
+            metodo = input("Digite o método de pagamento (ex: Cartão, Pix, Boleto): ")
+            status = input("Digite o status do pagamento (P para pago, A para aguardando): ")
+            inserir_pagamento(codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id)
+        elif adicionar_pagamento == 'n':
+            break
+        else:
+            print("Opção inválida. Tente novamente.")
+
+    print("Pedido do cliente inserido com sucesso!")
 
 def inserir_item_pedido(codigo_itemPedido, quantidade, pedidoCliente_id, peca_id=None, build_id=None):
     cursor.execute(
         "INSERT INTO itemPedido (codigo_itemPedido, quantidade, pedidoCliente_id, peca_id, build_id) VALUES (%s, %s, %s, %s, %s)",
-        (codigo_itemPedido, quantidade, pedidoCliente_id, peca_id, build_id))
+        (codigo_itemPedido, quantidade, pedidoCliente_id, peca_id, build_id)
+    )
     conn.commit()
-    print("Item do pedido inserido com sucesso!")
-
-def listar_item_pedido():
-    cursor.execute("SELECT * FROM itemPedido")
-    for item in cursor:
-        print(item)
-
-def inserir_estoque(codigo_estoque, quantidade, peca_id):
-    cursor.execute("INSERT INTO estoque (codigo_estoque, quantidade, peca_id) VALUES (%s, %s, %s)",
-                   (codigo_estoque, quantidade, peca_id))
-    conn.commit()
-    print("Estoque inserido com sucesso!")
-
-def listar_estoque():
-    cursor.execute("SELECT * FROM estoque")
-    for estoque in cursor:
-        print(estoque)
-
-def inserir_movimentacao_estoque(codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id):
-    cursor.execute(
-        "INSERT INTO movimentacaoEstoque (codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id) VALUES (%s, %s, %s, %s, %s)",
-        (codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id))
-    conn.commit()
-    print("Movimentação de estoque inserida com sucesso!")
-
-def listar_movimentacao_estoque():
-    cursor.execute("SELECT * FROM movimentacaoEstoque")
-    for movimentacao in cursor:
-        print(movimentacao)
-
-def inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj):
-    cursor.execute(
-        "INSERT INTO fornecedor (codigo_fornecedor, nome, email, endereco, telefone, cnpj) VALUES (%s, %s, %s, %s, %s, %s)",
-        (codigo_fornecedor, nome, email, endereco, telefone, cnpj))
-    conn.commit()
-    print("Fornecedor inserido com sucesso!")
-
-def listar_fornecedor():
-    cursor.execute("SELECT * FROM fornecedor")
-    for fornecedor in cursor:
-        print(fornecedor)
+    print(f"Item do pedido inserido com sucesso! Quantidade: {quantidade}")
 
 def inserir_pagamento(codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id):
     cursor.execute(
         "INSERT INTO pagamento (codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id) VALUES (%s, %s, %s, %s, %s, %s)",
         (codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id))
     conn.commit()
-    print("Pagamento inserido com sucesso!")
+    print(f"Pagamento inserido com sucesso! Valor: {valorPago}, Método: {metodo}, Status: {status}")
 
-def listar_pagamento():
-    cursor.execute("SELECT * FROM pagamento")
-    for pagamento in cursor:
-        print(pagamento)
+def listar_pedido_cliente_com_itens_e_pagamento():
+    cursor.execute("""
+        SELECT pc.codigo_pedidoCliente, pc.data, pc.hora, pc.cliente_id, pc.funcionario_id, 
+               ip.codigo_itemPedido, ip.quantidade, ip.peca_id, ip.build_id, 
+               p.codigo_pagamento, p.valorPago, p.dataPagamento, p.metodo, p.status
+        FROM pedidoCliente pc
+        LEFT JOIN itemPedido ip ON pc.codigo_pedidoCliente = ip.pedidoCliente_id
+        LEFT JOIN pagamento p ON pc.codigo_pedidoCliente = p.pedidoCliente_id
+        ORDER BY pc.codigo_pedidoCliente
+    """)
 
-def voltar_menu():
-    input("Pressione qualquer tecla para voltar ao menu principal...")
+    pedidos = cursor.fetchall()
 
-def listar_build_peca():
-    cursor.execute("SELECT * FROM buildPeca")
-    for buildPeca in cursor:
-        print(buildPeca)
+    if not pedidos:
+        print("Nenhum pedido encontrado.")
+        return
+
+    pedidos_dict = {}
+
+    for pedido in pedidos:
+        pedido_id = pedido[0]
+
+        if pedido_id not in pedidos_dict:
+            pedidos_dict[pedido_id] = {
+                'codigo_pedidoCliente': pedido[0],
+                'data': pedido[1],
+                'hora': pedido[2],
+                'cliente_id': pedido[3],
+                'funcionario_id': pedido[4],
+                'itens': [],
+                'pagamentos': []
+            }
+
+        # Adicionando item ao pedido
+        if pedido[5] is not None:
+            item = {
+                'codigo_itemPedido': pedido[5],
+                'quantidade': pedido[6],
+                'peca_id': pedido[7],
+                'build_id': pedido[8]
+            }
+            pedidos_dict[pedido_id]['itens'].append(item)
+
+        # Adicionando pagamento ao pedido
+        if pedido[9] is not None:
+            pagamento = {
+                'codigo_pagamento': pedido[9],
+                'valorPago': pedido[10],
+                'dataPagamento': pedido[11],
+                'metodo': pedido[12],
+                'status': pedido[13]
+            }
+            pedidos_dict[pedido_id]['pagamentos'].append(pagamento)
+
+    # Exibindo os pedidos com itens e pagamentos
+    for pedido_id, pedido_info in pedidos_dict.items():
+        print(f"\nPedido {pedido_info['codigo_pedidoCliente']} (Cliente ID: {pedido_info['cliente_id']})")
+        print(f"Data: {pedido_info['data']} | Hora: {pedido_info['hora']}")
+        print(f"Atendido por: {pedido_info['funcionario_id']}")
+
+        if pedido_info['itens']:
+            print("Itens no pedido:")
+            for item in pedido_info['itens']:
+                peca_str = f"Peça ID: {item['peca_id']}" if item['peca_id'] else f"Build ID: {item['build_id']}"
+                print(f"  - Item {item['codigo_itemPedido']} | Quantidade: {item['quantidade']} | {peca_str}")
+        else:
+            print("Nenhum item no pedido.")
+
+        if pedido_info['pagamentos']:
+            print("Pagamentos realizados:")
+            for pagamento in pedido_info['pagamentos']:
+                print(f"  - Pagamento ID: {pagamento['codigo_pagamento']} | Valor: {pagamento['valorPago']} | Método: {pagamento['metodo']} | Status: {pagamento['status']} | Data: {pagamento['dataPagamento']}")
+        else:
+            print("Nenhum pagamento realizado.")
+
+def inserir_estoque_com_movimentacao(codigo_estoque, quantidade_estoque, peca_id, codigo_movimentacaoEstoque,
+                                     quantidade_movimentacao, dataMovimentacao):
+    try:
+        cursor.execute(
+            "INSERT INTO estoque (codigo_estoque, quantidade, peca_id) VALUES (%s, %s, %s)",
+            (codigo_estoque, quantidade_estoque, peca_id)
+        )
+        conn.commit()
+        print("Estoque inserido com sucesso!")
+
+        cursor.execute(
+            "INSERT INTO movimentacaoEstoque (codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id) VALUES (%s, %s, %s, %s, %s)",
+            (codigo_movimentacaoEstoque, quantidade_movimentacao, dataMovimentacao, peca_id, codigo_estoque)
+        )
+        conn.commit()
+        print("Movimentação de estoque inserida com sucesso!")
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Ocorreu um erro: {e}")
+
+
+def inserir_estoque_com_movimentacao(codigo_estoque, quantidade, peca_id, codigo_movimentacaoEstoque, quantidade_movimentacao, dataMovimentacao):
+    cursor.execute("SELECT id_estoque FROM estoque WHERE codigo_estoque = %s", (codigo_estoque,))
+    estoque_existe = cursor.fetchone()
+
+    if not estoque_existe:
+        print("Erro: Estoque não encontrado. Inserindo novo estoque.")
+        cursor.execute("INSERT INTO estoque (codigo_estoque, quantidade, peca_id) VALUES (%s, %s, %s)",
+                       (codigo_estoque, quantidade, peca_id))
+        conn.commit()
+        print("Estoque inserido com sucesso!")
+
+    else:
+        print("Estoque encontrado, atualizando quantidade.")
+
+        cursor.execute("UPDATE estoque SET quantidade = quantidade + %s WHERE codigo_estoque = %s",
+                       (quantidade, codigo_estoque))
+        conn.commit()
+        print("Quantidade do estoque atualizada!")
+
+    cursor.execute("SELECT id_estoque FROM estoque WHERE codigo_estoque = %s", (codigo_estoque,))
+    estoque_id = cursor.fetchone()[0]
+
+    cursor.execute(
+        "INSERT INTO movimentacaoEstoque (codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id) VALUES (%s, %s, %s, %s, %s)",
+        (codigo_movimentacaoEstoque, quantidade_movimentacao, dataMovimentacao, peca_id, estoque_id))
+    conn.commit()
+    print("Movimentação de estoque inserida com sucesso!")
+
+def listar_movimentacao_estoque():
+    cursor.execute("""
+        SELECT m.codigo_movimentacaoEstoque, m.quantidade, m.dataMovimentacao, p.nome AS peca_nome
+        FROM movimentacaoEstoque m
+        JOIN peca p ON m.peca_id = p.id_peca
+        ORDER BY m.dataMovimentacao
+    """)
+    for row in cursor:
+        print(f"Movimentação Código: {row[0]}, Quantidade: {row[1]}, Data: {row[2]}, Peça: {row[3]}")
+
+def inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj, pecas_ids):
+    cursor.execute(
+        "INSERT INTO fornecedor (codigo_fornecedor, nome, email, endereco, telefone, cnpj) VALUES (%s, %s, %s, %s, %s, %s)",
+        (codigo_fornecedor, nome, email, endereco, telefone, cnpj))
+    conn.commit()
+    print("Fornecedor inserido com sucesso!")
+
+    cursor.execute("SELECT id_fornecedor FROM fornecedor WHERE codigo_fornecedor = %s", (codigo_fornecedor,))
+    fornecedor_id = cursor.fetchone()[0]
+
+    for peca_id in pecas_ids:
+        inserir_fornecedor_peca(fornecedor_id, peca_id)
+
+    print("Fornecedor e suas peças associadas inseridos com sucesso!")
 
 def inserir_fornecedor_peca(fornecedor_id, peca_id):
     cursor.execute("INSERT INTO fornecedorPeca (fornecedor_id, peca_id) VALUES (%s, %s)",
                    (fornecedor_id, peca_id))
     conn.commit()
-    print("FornecedorPeca inserido com sucesso!")
+    print(f"Peça {peca_id} associada ao fornecedor {fornecedor_id} com sucesso!")
 
-def listar_fornecedor_peca():
-    cursor.execute("SELECT * FROM fornecedorPeca")
-    for fornecedorPeca in cursor:
-        print(fornecedorPeca)
+def listar_fornecedor():
+    cursor.execute("""
+        SELECT f.id_fornecedor, f.nome AS fornecedor_nome, f.cnpj, p.id_peca, p.nome AS peca_nome
+        FROM fornecedor f
+        LEFT JOIN fornecedorPeca fp ON f.id_fornecedor = fp.fornecedor_id
+        LEFT JOIN peca p ON fp.peca_id = p.id_peca
+        ORDER BY f.id_fornecedor, p.id_peca;
+    """)
+    fornecedor_atual = None
+    for fornecedor in cursor:
+        if fornecedor_atual != fornecedor[0]:
+            if fornecedor_atual is not None:
+                print()
+            fornecedor_atual = fornecedor[0]
+            print(f"Fornecedor: {fornecedor[1]} (CNPJ: {fornecedor[2]})")
 
-# Função para consultar pedidos de clientes
+        if fornecedor[3] is not None:
+            print(f"  Peça: {fornecedor[4]} (ID: {fornecedor[3]})")
+        else:
+            print(f"  Nenhuma peça associada.")
+
+def voltar_menu():
+    input("Pressione qualquer tecla para voltar ao menu principal...")
+
 def consultar_pedido_cliente():
     query = """
         SELECT 
@@ -331,7 +478,6 @@ def consultar_pedido_cliente():
     for row in resultados:
         print(f"Pedido {row[0]} - Cliente: {row[1]} - Funcionário: {row[2]} - Data: {row[3]} - Hora: {row[4]}")
 
-# Função para consultar pedidos com peças
 def consultar_pedido_com_pecas():
     query = """
         SELECT 
@@ -349,7 +495,6 @@ def consultar_pedido_com_pecas():
     cursor.close()
     conn.close()
 
-# Função para consultar pagamentos com dados do cliente
 def consultar_pagamentos_com_cliente():
     query = """
         SELECT 
@@ -402,7 +547,6 @@ def relatorio_pagamentos(data_inicial, data_final):
     print("\nRelatório de Pagamentos:")
     for pagamento in pagamentos:
         print(pagamento)
-
 
 def relatorio_movimentacao_estoque(data_inicial, data_final):
     query = "SELECT * FROM movimentacaoEstoque WHERE dataMovimentacao BETWEEN %s AND %s;"
@@ -544,8 +688,6 @@ def relatorio_categorias_estoque_abaixo_media():
     for categoria in categorias:
         print(categoria)
 
-
-# Menu principal
 def main():
     op = 1
     opPeca = 0
@@ -688,64 +830,78 @@ def main():
                     case '6':
                         break
 
-        elif op == '25':
-            break
-        elif op == '26':
-            listar_build_peca()
+        elif op == '6': # Vendas
+            while True:
+                print("Digite a opção: ")
+                opVenda = input("1 - Realizar Pedido\n"
+                                "2 - Listar Pedidos\n"
+                                "3 - Sair\n"
+                               )
 
-        elif op == '13':
-            codigo_pedidoCliente = input("Digite o código do pedido do cliente: ")
-            data = input("Digite a data do pedido (formato: yyyy-mm-dd): ")
-            hora = input("Digite a hora do pedido (formato: hh:mm:ss): ")
-            cliente_id = input("Digite o id do cliente: ")
-            funcionario_id = input("Digite o id do funcionário: ")
-            inserir_pedido_cliente(codigo_pedidoCliente, data, hora, cliente_id, funcionario_id)
+                match opVenda:
+                    case '1':
+                        codigo_pedidoCliente = input("Digite o código do pedido do cliente: ")
+                        data = input("Digite a data do pedido (formato: yyyy-mm-dd): ")
+                        hora = input("Digite a hora do pedido (formato: hh:mm:ss): ")
+                        cliente_id = input("Digite o id do cliente: ")
+                        funcionario_id = input("Digite o id do funcionário: ")
+                        inserir_pedido_cliente(codigo_pedidoCliente, data, hora, cliente_id, funcionario_id)
+                    case '2':
+                        listar_pedido_cliente_com_itens_e_pagamento()
+                    case '3':
+                        break
 
-        elif op == '14':
-            listar_pedido_cliente()
+        elif op == '7':
+            while True:
+                print("Digite a opção: ")
+                opEstoque = input("1 - Inserir Estoque\n"
+                                "2 - Verificar Estoque\n"
+                                "3 - Sair\n"
+                               )
 
-        elif op == '15':
-            codigo_itemPedido = input("Digite o código do item do pedido: ")
-            quantidade = input("Digite a quantidade do item: ")
-            pedidoCliente_id = input("Digite o id do pedido do cliente: ")
-            peca_id = input("Digite o id da peça (ou pressione Enter para não informar): ")
-            build_id = input("Digite o id do build (ou pressione Enter para não informar): ")
-            inserir_item_pedido(codigo_itemPedido, quantidade, pedidoCliente_id, peca_id or None, build_id or None)
+                match opEstoque:
+                    case '1':
+                        codigo_estoque = input("Digite o código do estoque: ")
+                        quantidade = input("Digite a quantidade do estoque: ")
+                        peca_id = input("Digite o id da peça: ")
+                        codigo_movimentacaoEstoque = input("Digite o código da movimentação de estoque: ")
+                        dataMovimentacao = input("Digite a data e hora da movimentação (formato: yyyy-mm-dd hh:mm:ss): ")
+                        inserir_estoque_com_movimentacao(codigo_estoque, quantidade, peca_id, codigo_movimentacaoEstoque, quantidade, dataMovimentacao)
+                    case '2':
+                        listar_movimentacao_estoque()
+                    case '3':
+                        break
 
-        elif op == '16':
-            listar_item_pedido()
+        elif op == '8':
+            while True:
+                peca_id = 0
+                print("Digite a opção: ")
+                opFornecedor = input("1 - Cadastrar Fornecedor\n"
+                                  "2 - Listar Fornecedores\n"
+                                  "3 - Sair\n"
+                                  )
 
-        elif op == '17':
-            codigo_estoque = input("Digite o código do estoque: ")
-            quantidade = input("Digite a quantidade do estoque: ")
-            peca_id = input("Digite o id da peça: ")
-            inserir_estoque(codigo_estoque, quantidade, peca_id)
+                match opFornecedor:
+                    case '1':
+                        codigo_fornecedor = input("Digite o código do fornecedor: ")
+                        nome = input("Digite o nome do fornecedor: ")
+                        email = input("Digite o email do fornecedor: ")
+                        endereco = input("Digite o endereço do fornecedor: ")
+                        telefone = input("Digite o telefone do fornecedor: ")
+                        cnpj = input("Digite o CNPJ do fornecedor: ")
 
-        elif op == '18':
-            listar_estoque()
+                        pecas_ids = []
+                        while True:
+                            peca_id = input("Digite o código da peça (ou '0' para finalizar): ")
+                            if peca_id == '0':
+                                break
+                            pecas_ids.append(int(peca_id))
 
-        elif op == '19':
-            codigo_movimentacaoEstoque = input("Digite o código da movimentação de estoque: ")
-            quantidade = input("Digite a quantidade movimentada: ")
-            dataMovimentacao = input("Digite a data e hora da movimentação (formato: yyyy-mm-dd hh:mm:ss): ")
-            peca_id = input("Digite o id da peça: ")
-            estoque_id = input("Digite o id do estoque: ")
-            inserir_movimentacao_estoque(codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id)
-
-        elif op == '20':
-            listar_movimentacao_estoque()
-
-        elif op == '21':
-            codigo_fornecedor = input("Digite o código do fornecedor: ")
-            nome = input("Digite o nome do fornecedor: ")
-            email = input("Digite o email do fornecedor: ")
-            endereco = input("Digite o endereço do fornecedor: ")
-            telefone = input("Digite o telefone do fornecedor: ")
-            cnpj = input("Digite o CNPJ do fornecedor: ")
-            inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj)
-
-        elif op == '22':
-            listar_fornecedor()
+                        inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj, pecas_ids)
+                    case '2':
+                        listar_fornecedor()
+                    case '3':
+                        break
 
         elif op == '23':
             codigo_pagamento = input("Digite o código do pagamento: ")
@@ -758,14 +914,6 @@ def main():
 
         elif op == '24':
             listar_pagamento()
-
-        elif op == '27':
-            fornecedor_id = input("Digite o código do fornecedor: ")
-            peca_id = input("Digite o código da peça: ")
-            inserir_fornecedor_peca(fornecedor_id, peca_id)
-
-        elif op == '28':
-            listar_fornecedor_peca()
 
         elif op == '29':
             print("Relatórios Gerenciais")
