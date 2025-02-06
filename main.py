@@ -184,8 +184,14 @@ CREATE TABLE fornecedorPeca(
 
 def listar_tabelas():
     cursor.execute("SHOW TABLES")
-    for tabela in cursor:
-        print(tabela)
+    tabelas = cursor.fetchall()
+    
+    print("\nTabelas no banco de dados:")
+    print("-" * 30)
+    for tabela in tabelas:
+        print(f"- {tabela[0]}")
+    print("-" * 30)
+
 
 
 def inserir_categoria_peca(codigo_categoriaPeca, nome):
@@ -195,9 +201,18 @@ def inserir_categoria_peca(codigo_categoriaPeca, nome):
 
 
 def listar_categoria_peca():
-    cursor.execute("SELECT * FROM categoriaPeca")
-    for categoria in cursor:
-        print(categoria)
+    query = "SELECT id_categoriaPeca, codigo_categoriaPeca, nome FROM categoriaPeca"
+    cursor.execute(query)
+    
+    categorias = cursor.fetchall()
+    
+    print("\nLista de Categorias de Peças:")
+    print("{:<5} {:<15} {:<50}".format("ID", "Código", "Nome"))
+    print("-" * 70)
+    
+    for categoria in categorias:
+        print("{:<5} {:<15} {:<50}".format(categoria[0], categoria[1], categoria[2]))
+
 
 
 def inserir_peca(codigo_peca, nome, preco, categoriaPeca_id):
@@ -208,9 +223,22 @@ def inserir_peca(codigo_peca, nome, preco, categoriaPeca_id):
 
 
 def listar_peca():
-    cursor.execute("SELECT * FROM peca")
-    for peca in cursor:
-        print(peca)
+    query = """
+        SELECT p.id_peca, p.codigo_peca, p.nome, p.preco, cp.nome AS categoria
+        FROM peca p
+        JOIN categoriaPeca cp ON p.categoriaPeca_id = cp.id_categoriaPeca
+    """
+    cursor.execute(query)
+    pecas = cursor.fetchall()
+
+    print("\nLista de Peças:")
+    print("{:<5} {:<15} {:<30} {:<10} {:<20}".format("ID", "Código", "Nome", "Preço", "Categoria"))
+    print("-" * 80)
+
+    for peca in pecas:
+        print("{:<5} {:<15} {:<30} R${:<8.2f} {:<20}".format(peca[0], peca[1], peca[2], peca[3], peca[4]))
+
+
 
 
 def inserir_cliente(codigo_cliente, nome, email, senha, endereco, telefone, cpf):
@@ -221,9 +249,24 @@ def inserir_cliente(codigo_cliente, nome, email, senha, endereco, telefone, cpf)
 
 
 def listar_cliente():
-    cursor.execute("SELECT * FROM cliente")
-    for cliente in cursor:
-        print(cliente)
+    query = """
+        SELECT id_cliente, codigo_cliente, nome, email, endereco, telefone, cpf
+        FROM cliente
+    """
+    cursor.execute(query)
+    clientes = cursor.fetchall()
+
+    print("\nLista de Clientes:")
+    print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11}".format(
+        "ID", "Código", "Nome", "Email", "Endereço", "Telefone", "CPF"
+    ))
+    print("-" * 150)
+
+    for cliente in clientes:
+        print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11}".format(
+            cliente[0], cliente[1], cliente[2], cliente[3], cliente[4], cliente[5], cliente[6]
+        ))
+
 
 
 def inserir_funcionario(codigo_funcionario, nome, email, endereco, telefone, cpf, salario, cargo):
@@ -234,9 +277,25 @@ def inserir_funcionario(codigo_funcionario, nome, email, endereco, telefone, cpf
 
 
 def listar_funcionario():
-    cursor.execute("SELECT * FROM funcionario")
-    for funcionario in cursor:
-        print(funcionario)
+    query = """
+        SELECT id_funcionario, codigo_funcionario, nome, email, endereco, telefone, cpf, salario, cargo
+        FROM funcionario
+    """
+    cursor.execute(query)
+    funcionarios = cursor.fetchall()
+
+    print("\nLista de Funcionários:")
+    print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11} {:<10} {:<5}".format(
+        "ID", "Código", "Nome", "Email", "Endereço", "Telefone", "CPF", "Salário", "Cargo"
+    ))
+    print("-" * 170)
+
+    for funcionario in funcionarios:
+        print("{:<5} {:<15} {:<30} {:<30} {:<40} {:<16} {:<11} {:<10.2f} {:<5}".format(
+            funcionario[0], funcionario[1], funcionario[2], funcionario[3], funcionario[4], 
+            funcionario[5], funcionario[6], funcionario[7], funcionario[8]
+        ))
+
 
 
 def inserir_build(codigo_build, valor, cliente_id, funcionario_id):
@@ -260,9 +319,29 @@ def inserir_pedido_cliente(codigo_pedidoCliente, data, hora, cliente_id, funcion
 
 
 def listar_pedido_cliente():
-    cursor.execute("SELECT * FROM pedidoCliente")
-    for pedido in cursor:
-        print(pedido)
+    query = """
+        SELECT p.id_pedidoCliente, p.codigo_pedidoCliente, 
+               DATE_FORMAT(p.data, '%d/%m/%Y') AS data_pedido, 
+               TIME_FORMAT(p.hora, '%H:%i') AS hora_pedido, 
+               c.nome AS cliente, f.nome AS funcionario
+        FROM pedidoCliente p
+        JOIN cliente c ON p.cliente_id = c.id_cliente
+        JOIN funcionario f ON p.funcionario_id = f.id_funcionario
+    """
+    cursor.execute(query)
+    pedidos = cursor.fetchall()
+
+    print("\nLista de Pedidos dos Clientes:")
+    print("{:<5} {:<15} {:<12} {:<8} {:<30} {:<30}".format(
+        "ID", "Código", "Data", "Hora", "Cliente", "Funcionário"
+    ))
+    print("-" * 100)
+
+    for pedido in pedidos:
+        print("{:<5} {:<15} {:<12} {:<8} {:<30} {:<30}".format(
+            pedido[0], pedido[1], pedido[2], pedido[3], pedido[4], pedido[5]
+        ))
+
 
 
 def inserir_item_pedido(codigo_itemPedido, quantidade, pedidoCliente_id, peca_id=None, build_id=None):
@@ -273,9 +352,29 @@ def inserir_item_pedido(codigo_itemPedido, quantidade, pedidoCliente_id, peca_id
 
 
 def listar_item_pedido():
-    cursor.execute("SELECT * FROM itemPedido")
-    for item in cursor:
-        print(item)
+    query = """
+        SELECT i.id_itemPedido, i.codigo_itemPedido, i.quantidade, 
+               p.codigo_pedidoCliente, 
+               COALESCE(pe.nome, b.codigo_build) AS item_nome
+        FROM itemPedido i
+        JOIN pedidoCliente p ON i.pedidoCliente_id = p.id_pedidoCliente
+        LEFT JOIN peca pe ON i.peca_id = pe.id_peca
+        LEFT JOIN build b ON i.build_id = b.id_build
+    """
+    cursor.execute(query)
+    itens = cursor.fetchall()
+
+    print("\nLista de Itens dos Pedidos:")
+    print("{:<5} {:<15} {:<10} {:<15} {:<30}".format(
+        "ID", "Código", "Qtd", "Pedido", "Item (Peça/Build)"
+    ))
+    print("-" * 80)
+
+    for item in itens:
+        print("{:<5} {:<15} {:<10} {:<15} {:<30}".format(
+            item[0], item[1], item[2], item[3], item[4]
+        ))
+
 
 
 def inserir_estoque(codigo_estoque, quantidade, peca_id):
@@ -286,9 +385,24 @@ def inserir_estoque(codigo_estoque, quantidade, peca_id):
 
 
 def listar_estoque():
-    cursor.execute("SELECT * FROM estoque")
-    for estoque in cursor:
-        print(estoque)
+    query = """
+        SELECT e.id_estoque, e.codigo_estoque, p.nome AS nome_peca, e.quantidade
+        FROM estoque e
+        JOIN peca p ON e.peca_id = p.id_peca
+        ORDER BY p.nome;
+    """
+    cursor.execute(query)
+    estoques = cursor.fetchall()
+    
+    print(f"{'ID':<5} {'Código':<10} {'Peça':<30} {'Quantidade':<10}")
+    print("-" * 60)
+    
+    for estoque in estoques:
+        print(f"{estoque[0]:<5} {estoque[1]:<10} {estoque[2]:<30} {estoque[3]:<10}")
+
+    if not estoques:
+        print("Nenhum item em estoque.")
+
 
 
 def inserir_movimentacao_estoque(codigo_movimentacaoEstoque, quantidade, dataMovimentacao, peca_id, estoque_id):
@@ -299,9 +413,26 @@ def inserir_movimentacao_estoque(codigo_movimentacaoEstoque, quantidade, dataMov
 
 
 def listar_movimentacao_estoque():
-    cursor.execute("SELECT * FROM movimentacaoEstoque")
-    for movimentacao in cursor:
-        print(movimentacao)
+    query = """
+        SELECT m.id_movimentacaoEstoque, m.codigo_movimentacaoEstoque, 
+               p.nome AS nome_peca, m.quantidade, m.dataMovimentacao
+        FROM movimentacaoEstoque m
+        JOIN peca p ON m.peca_id = p.id_peca
+        ORDER BY m.dataMovimentacao DESC;
+    """
+    
+    cursor.execute(query)
+    movimentacoes = cursor.fetchall()
+    
+    print(f"{'ID':<5} {'Código':<10} {'Peça':<30} {'Quantidade':<12} {'Data e Hora':<20}")
+    print("-" * 80)
+    
+    for mov in movimentacoes:
+        print(f"{mov[0]:<5} {mov[1]:<10} {mov[2]:<30} {mov[3]:<12} {mov[4]:<20}")
+
+    if not movimentacoes:
+        print("Nenhuma movimentação registrada no estoque.")
+
 
 
 def inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj):
@@ -312,9 +443,24 @@ def inserir_fornecedor(codigo_fornecedor, nome, email, endereco, telefone, cnpj)
 
 
 def listar_fornecedor():
-    cursor.execute("SELECT * FROM fornecedor")
-    for fornecedor in cursor:
-        print(fornecedor)
+    query = """
+        SELECT id_fornecedor, codigo_fornecedor, nome, email, telefone, cnpj
+        FROM fornecedor
+        ORDER BY nome;
+    """
+    
+    cursor.execute(query)
+    fornecedores = cursor.fetchall()
+
+    print(f"{'ID':<5} {'Código':<10} {'Nome':<30} {'Email':<30} {'Telefone':<15} {'CNPJ':<15}")
+    print("-" * 110)
+    
+    for fornecedor in fornecedores:
+        print(f"{fornecedor[0]:<5} {fornecedor[1]:<10} {fornecedor[2]:<30} {fornecedor[3]:<30} {fornecedor[4]:<15} {fornecedor[5]:<15}")
+
+    if not fornecedores:
+        print("Nenhum fornecedor cadastrado.")
+
 
 
 def inserir_pagamento(codigo_pagamento, valorPago, dataPagamento, metodo, status, pedidoCliente_id):
@@ -325,9 +471,27 @@ def inserir_pagamento(codigo_pagamento, valorPago, dataPagamento, metodo, status
 
 
 def listar_pagamento():
-    cursor.execute("SELECT * FROM pagamento")
-    for pagamento in cursor:
-        print(pagamento)
+    query = """
+        SELECT p.id_pagamento, p.codigo_pagamento, p.valorPago, p.dataPagamento, 
+               p.metodo, p.status, pc.codigo_pedidoCliente
+        FROM pagamento p
+        JOIN pedidoCliente pc ON p.pedidoCliente_id = pc.id_pedidoCliente
+        ORDER BY p.dataPagamento DESC;
+    """
+    
+    cursor.execute(query)
+    pagamentos = cursor.fetchall()
+
+    print(f"{'ID':<5} {'Código':<10} {'Valor Pago':<12} {'Data Pagamento':<20} {'Método':<15} {'Status':<8} {'Pedido':<10}")
+    print("-" * 90)
+    
+    for pag in pagamentos:
+        status_str = "Pago" if pag[5] == "P" else "Pendente"  # Supondo que 'P' significa "Pago"
+        print(f"{pag[0]:<5} {pag[1]:<10} R${pag[2]:<10.2f} {pag[3]:<20} {pag[4]:<15} {status_str:<8} {pag[6]:<10}")
+
+    if not pagamentos:
+        print("Nenhum pagamento registrado.")
+
 
 
 def voltar_menu():
